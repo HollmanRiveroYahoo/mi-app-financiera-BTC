@@ -126,7 +126,13 @@ export default function Home() {
     { symbol: 'XMR-USD', name: 'Monero' },
     { symbol: 'AAPL', name: 'Apple Inc.' },
     { symbol: 'TSLA', name: 'Tesla Inc.' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp.' }
+    { symbol: 'NVDA', name: 'NVIDIA Corp.' },
+    { symbol: 'MSFT', name: 'Microsoft' },
+    { symbol: 'AMZN', name: 'Amazon' },
+    { symbol: 'GOOGL', name: 'Alphabet' },
+    { symbol: 'META', name: 'Meta Platforms' },
+    { symbol: 'EURUSD=X', name: 'EUR/USD' },
+    { symbol: 'NOK=X', name: 'USD/NOK' }
   ];
 
   // Henter alle kryptovalutaer fra Yahoo Finance Krypto-screener
@@ -310,8 +316,14 @@ export default function Home() {
     transition: 'all 0.2s ease'
   });
 
-  // Kombiner krypto-symboler til nedtrekksmenyen
-  const availableCryptoOptions = cryptoList.length > 0 ? cryptoList : defaultCryptos;
+  // Kombiner krypto-symboler til nedtrekksmenyen. Sikre at aksjer/valuta fra defaultCryptos er med.
+  const availableCryptoOptions = [...cryptoList];
+  defaultCryptos.forEach(dc => {
+    if (!availableCryptoOptions.find(c => c.symbol === dc.symbol)) {
+      availableCryptoOptions.push(dc);
+    }
+  });
+
   const filteredCryptoTable = availableCryptoOptions.filter(c => {
     if (!tableFilter) return true;
     const query = tableFilter.toLowerCase();
@@ -339,10 +351,10 @@ export default function Home() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px', marginBottom: '25px' }}>
           <div>
             <h1 style={{ fontSize: '28px', color: '#f0b90b', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span>₿</span> Bitcoin & Kryptovaluta Scanner
+              <span>₿</span> Krypto, Aksjer & Valuta Scanner
             </h1>
             <p style={{ color: '#8c91a4', margin: '6px 0 0 0', fontSize: '14px' }}>
-              Reelle kurser, tekniske trading-hints (RSI, SMA7) og sanntidsdata direkte fra Yahoo Finance krypto-fanen.
+              Reelle kurser, tekniske trading-hints for aksjemarkedet og krypto (RSI, SMA7) direkte fra Yahoo Finance.
             </p>
           </div>
 
@@ -524,15 +536,15 @@ export default function Home() {
           <CryptoChart chartData={chartData} symbol={symbol} />
         </div>
 
-        {/* SEKSJON 1: Krypto Hints & Tekniske Signaler */}
+        {/* SEKSJON 1: Krypto, Aksjer & Valuta Hints & Tekniske Signaler */}
         <div style={{ marginBottom: '40px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <h2 style={{ fontSize: '22px', margin: 0, color: '#f0b90b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🚦</span> Krypto Trading Hints & Signaler
+                <span>🚦</span> Trading Hints (Aksjer, Valuta & Krypto)
               </h2>
               <p style={{ color: '#8c91a4', margin: '4px 0 0 0', fontSize: '13px' }}>
-                Automatisk beregnede hints basert på RSI, SMA7 og handelsvolum for de største kryptovalutaene.
+                Automatisk beregnede hints basert på RSI, SMA7 og handelsvolum for de største instrumentene.
               </p>
             </div>
             <button
@@ -571,7 +583,7 @@ export default function Home() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #2a2e39', background: '#131722', color: '#8c91a4' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left' }}>Krypto</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left' }}>Symbol</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left' }}>Pris (USD)</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left' }}>RSI</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left' }}>SMA7 Snitt</th>
@@ -671,15 +683,15 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SEKSJON 2: Yahoo Finance Krypto-fanen (Alle Kryptovalutaer) */}
+        {/* SEKSJON 2: Yahoo Finance Markedsoversikt */}
         <div style={{ marginBottom: '30px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <h2 style={{ fontSize: '22px', margin: 0, color: '#f0b90b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🌐</span> Yahoo Finance Kryptovalutaer ({filteredCryptoTable.length})
+                <span>🌐</span> Yahoo Finance Markedsoversikt ({filteredCryptoTable.length})
               </h2>
               <p style={{ color: '#8c91a4', margin: '4px 0 0 0', fontSize: '13px' }}>
-                Komplett oversikt kopiert og synkronisert fra Yahoo Finance sin kryptoseksjon sortert etter markedsverdi.
+                Oversikt over krypto, aksjer og valuta synkronisert fra Yahoo Finance.
               </p>
             </div>
 

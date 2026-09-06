@@ -6,7 +6,7 @@ const CRYPTO_SYMBOLS = [
   'DOGE-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD', 'SUI20947-USD',
   'NEAR-USD', 'DOT-USD', 'BCH-USD', 'LTC-USD', 'SHIB-USD',
   'PEPE24478-USD', 'UNI7083-USD', 'XMR-USD', 'XLM-USD', 'APT21794-USD',
-  'AAPL', 'TSLA', 'NVDA'
+  'AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'EURUSD=X', 'NOK=X'
 ];
 
 let cachedSignals = null;
@@ -44,7 +44,7 @@ export async function GET(request) {
       });
     }
 
-    const MAX_SCAN = 23; // Scanner de største kryptovalutaene pluss aksjer
+    const MAX_SCAN = 40; // Scanner de største kryptovalutaene pluss aksjer og valuta
     const symbolsToScan = CRYPTO_SYMBOLS.slice(0, MAX_SCAN);
     const signals = [];
 
