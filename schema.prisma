@@ -1,0 +1,12 @@
+mv scjema.prisma schema.prisma
+mv prisma.config.ts prisma.config.ts.bak
+cat > vercel.json << 'EOF'
+{
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install"
+}
+EOF
+rm -rf .vercel
+vercel link --yes
+vercel --prod
