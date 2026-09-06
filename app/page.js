@@ -101,9 +101,10 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState('month');
   const [isLoadingSignals, setIsLoadingSignals] = useState(false);
   const [isLoadingCryptos, setIsLoadingCryptos] = useState(false);
+  const [showAllCryptos, setShowAllCryptos] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Standard topp kryptovalutaer som alltid er tilgjengelige
+  // Standard topp kryptovalutaer og aksjer som alltid er tilgjengelige
   const defaultCryptos = [
     { symbol: 'BTC-USD', name: 'Bitcoin' },
     { symbol: 'ETH-USD', name: 'Ethereum' },
@@ -122,7 +123,10 @@ export default function Home() {
     { symbol: 'SHIB-USD', name: 'Shiba Inu' },
     { symbol: 'PEPE24478-USD', name: 'Pepe' },
     { symbol: 'UNI7083-USD', name: 'Uniswap' },
-    { symbol: 'XMR-USD', name: 'Monero' }
+    { symbol: 'XMR-USD', name: 'Monero' },
+    { symbol: 'AAPL', name: 'Apple Inc.' },
+    { symbol: 'TSLA', name: 'Tesla Inc.' },
+    { symbol: 'NVDA', name: 'NVIDIA Corp.' }
   ];
 
   // Henter alle kryptovalutaer fra Yahoo Finance Krypto-screener
@@ -313,6 +317,8 @@ export default function Home() {
     const query = tableFilter.toLowerCase();
     return c.symbol.toLowerCase().includes(query) || (c.name && c.name.toLowerCase().includes(query));
   });
+
+  const cryptoListToDisplay = showAllCryptos ? filteredCryptoTable : filteredCryptoTable.slice(0, 30);
 
   if (!isMounted) {
     return (
@@ -633,11 +639,11 @@ export default function Home() {
                           fontSize: '12px',
                           fontWeight: 'bold',
                           display: 'inline-block',
-                          background: s.action === 'COMPRAR' ? 'rgba(0, 200, 151, 0.2)' : (s.action === 'VENDER' ? 'rgba(242, 54, 69, 0.2)' : 'rgba(240, 185, 11, 0.2)'),
-                          color: s.action === 'COMPRAR' ? '#00c897' : (s.action === 'VENDER' ? '#f23645' : '#f0b90b'),
-                          border: `1px solid ${s.action === 'COMPRAR' ? '#00c89766' : (s.action === 'VENDER' ? '#f2364566' : '#f0b90b66')}`
+                          background: s.action === 'KJØP' ? 'rgba(0, 200, 151, 0.2)' : (s.action === 'SELG' ? 'rgba(242, 54, 69, 0.2)' : 'rgba(240, 185, 11, 0.2)'),
+                          color: s.action === 'KJØP' ? '#00c897' : (s.action === 'SELG' ? '#f23645' : '#f0b90b'),
+                          border: `1px solid ${s.action === 'KJØP' ? '#00c89766' : (s.action === 'SELG' ? '#f2364566' : '#f0b90b66')}`
                         }}>
-                          {s.action === 'COMPRAR' ? '🟢 KJØP HINT' : (s.action === 'VENDER' ? '🔴 SELG HINT' : '🟡 OBSERVER')}
+                          {s.action === 'KJØP' ? '🟢 KJØP HINT' : (s.action === 'SELG' ? '🔴 SELG HINT' : '🟡 OBSERVER')}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'center' }}>
@@ -677,22 +683,39 @@ export default function Home() {
               </p>
             </div>
 
-            <input
-              type="text"
-              placeholder="Filtrer kryptovaluta (f.eks Bitcoin, SOL, PEPE)..."
-              value={tableFilter}
-              onChange={(e) => setTableFilter(e.target.value)}
-              style={{
-                padding: '9px 14px',
-                background: '#1e222d',
-                color: 'white',
-                border: '1px solid #363c4e',
-                borderRadius: '8px',
-                fontSize: '13px',
-                width: '320px',
-                outline: 'none'
-              }}
-            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowAllCryptos(!showAllCryptos)}
+                style={{
+                  padding: '9px 14px',
+                  background: showAllCryptos ? '#f0b90b' : '#2a2e39',
+                  color: showAllCryptos ? '#000' : '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                {showAllCryptos ? 'Vis Topp 30' : 'Vis Alle'}
+              </button>
+              <input
+                type="text"
+                placeholder="Filtrer kryptovaluta (f.eks Bitcoin, SOL, PEPE)..."
+                value={tableFilter}
+                onChange={(e) => setTableFilter(e.target.value)}
+                style={{
+                  padding: '9px 14px',
+                  background: '#1e222d',
+                  color: 'white',
+                  border: '1px solid #363c4e',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  width: '320px',
+                  outline: 'none'
+                }}
+              />
+            </div>
           </div>
 
           <div style={{
@@ -715,7 +738,7 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCryptoTable.map((c, index) => {
+                {cryptoListToDisplay.map((c, index) => {
                   const chgPct = c.changePercent !== undefined ? c.changePercent : 0;
                   const isPositive = chgPct >= 0;
                   return (

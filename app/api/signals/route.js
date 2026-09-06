@@ -5,7 +5,8 @@ const CRYPTO_SYMBOLS = [
   'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD',
   'DOGE-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD', 'SUI20947-USD',
   'NEAR-USD', 'DOT-USD', 'BCH-USD', 'LTC-USD', 'SHIB-USD',
-  'PEPE24478-USD', 'UNI7083-USD', 'XMR-USD', 'XLM-USD', 'APT21794-USD'
+  'PEPE24478-USD', 'UNI7083-USD', 'XMR-USD', 'XLM-USD', 'APT21794-USD',
+  'AAPL', 'TSLA', 'NVDA'
 ];
 
 let cachedSignals = null;
@@ -19,12 +20,13 @@ const FETCH_HEADERS = {
 
 function getFallbackSignals() {
   return [
-    { symbol: 'BTC-USD', name: 'Bitcoin', price: 79870.50, confidence: 88, action: 'COMPRAR', timestamp: new Date().toISOString(), rsi: 26, sma7: 78500.00 },
-    { symbol: 'ETH-USD', name: 'Ethereum', price: 2492.20, confidence: 75, action: 'COMPRAR', timestamp: new Date().toISOString(), rsi: 34, sma7: 2460.10 },
-    { symbol: 'SOL-USD', name: 'Solana', price: 105.80, confidence: 68, action: 'OBSERVAR', timestamp: new Date().toISOString(), rsi: 48, sma7: 104.20 },
-    { symbol: 'BNB-USD', name: 'BNB', price: 750.10, confidence: 72, action: 'COMPRAR', timestamp: new Date().toISOString(), rsi: 38, sma7: 742.00 },
-    { symbol: 'XRP-USD', name: 'XRP', price: 1.41, confidence: 45, action: 'OBSERVAR', timestamp: new Date().toISOString(), rsi: 56, sma7: 1.43 },
-    { symbol: 'DOGE-USD', name: 'Dogecoin', price: 0.089, confidence: 30, action: 'VENDER', timestamp: new Date().toISOString(), rsi: 74, sma7: 0.091 }
+    { symbol: 'BTC-USD', name: 'Bitcoin', price: 79870.50, confidence: 88, action: 'KJØP', timestamp: new Date().toISOString(), rsi: 26, sma7: 78500.00 },
+    { symbol: 'ETH-USD', name: 'Ethereum', price: 2492.20, confidence: 75, action: 'KJØP', timestamp: new Date().toISOString(), rsi: 34, sma7: 2460.10 },
+    { symbol: 'SOL-USD', name: 'Solana', price: 105.80, confidence: 68, action: 'OBSERVER', timestamp: new Date().toISOString(), rsi: 48, sma7: 104.20 },
+    { symbol: 'BNB-USD', name: 'BNB', price: 750.10, confidence: 72, action: 'KJØP', timestamp: new Date().toISOString(), rsi: 38, sma7: 742.00 },
+    { symbol: 'XRP-USD', name: 'XRP', price: 1.41, confidence: 45, action: 'OBSERVER', timestamp: new Date().toISOString(), rsi: 56, sma7: 1.43 },
+    { symbol: 'DOGE-USD', name: 'Dogecoin', price: 0.089, confidence: 30, action: 'SELG', timestamp: new Date().toISOString(), rsi: 74, sma7: 0.091 },
+    { symbol: 'AAPL', name: 'Apple Inc.', price: 180.50, confidence: 85, action: 'KJØP', timestamp: new Date().toISOString(), rsi: 32, sma7: 178.20 }
   ];
 }
 
@@ -42,7 +44,7 @@ export async function GET(request) {
       });
     }
 
-    const MAX_SCAN = 12; // Scanner de 12 største kryptovalutaene for optimal responstid
+    const MAX_SCAN = 23; // Scanner de største kryptovalutaene pluss aksjer
     const symbolsToScan = CRYPTO_SYMBOLS.slice(0, MAX_SCAN);
     const signals = [];
 
@@ -111,9 +113,9 @@ export async function GET(request) {
 
         confidence = Math.min(100, Math.max(0, Math.round(confidence)));
 
-        let action = 'OBSERVAR';
-        if (confidence >= 70) action = 'COMPRAR';
-        else if (confidence <= 30) action = 'VENDER';
+        let action = 'OBSERVER';
+        if (confidence >= 70) action = 'KJØP';
+        else if (confidence <= 30) action = 'SELG';
 
         signals.push({
           symbol: symbol,
