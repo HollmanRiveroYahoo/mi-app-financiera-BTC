@@ -1,4 +1,4 @@
-﻿// app/api/signals/route.js - KRYPTO SIGNAL SCANNER MED YAHOO FINANCE (Top 100)
+// app/api/signals/route.js - KRYPTO SIGNAL SCANNER MED YAHOO FINANCE (Top 100)
 import { NextResponse } from 'next/server';
 
 let cachedSignals = null;
@@ -55,7 +55,7 @@ export async function GET(request) {
       const promises = batch.map(async (symbol) => {
         try {
           const histRes = await fetch(
-            \https://query1.finance.yahoo.com/v8/finance/chart/\?interval=1d&range=1mo\,
+            `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1mo`,
             { headers: FETCH_HEADERS, next: { revalidate: 180 } }
           );
           if (!histRes.ok) return null;
