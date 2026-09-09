@@ -532,7 +532,7 @@ export default function Home() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <h2 style={{ fontSize: '22px', margin: 0, color: '#f0b90b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🚦</span> Trading Hints (Kryptovaluta)
+                <span>🎯</span> Dagens Revolut-Tips
               </h2>
               <p style={{ color: '#8c91a4', margin: '4px 0 0 0', fontSize: '13px' }}>
                 Automatisk beregnede hints basert på RSI, SMA7 og handelsvolum for de største kryptovalutaene.
@@ -682,7 +682,7 @@ export default function Home() {
                 <span>🌐</span> Yahoo Finance Markedsoversikt ({filteredCryptoTable.length})
               </h2>
               <p style={{ color: '#8c91a4', margin: '4px 0 0 0', fontSize: '13px' }}>
-                Oversikt over kryptovaluta synkronisert fra Yahoo Finance.
+                Oversikt over kryptovaluta synkronisert fra Yahoo Finance (Revolut-støttede mynter).
               </p>
             </div>
 

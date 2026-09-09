@@ -43,6 +43,19 @@ export async function GET(request) {
     }
 
     let symbolsToScan = await fetchTop100Symbols();
+    
+    // Filtrer KUN Revolut mynter
+    const REVOLUT_SUPPORTED = new Set([
+      'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'ADA', 'DOT', 'LINK', 'XLM', 'EOS', 'XTZ', 'UNI', 'COMP', 'MATIC', 'POL', 'ATOM', 'ALGO', 'DOGE', 'SHIB', 'SOL', 'AVAX', 'APE', 'CRV', '1INCH', 'GALA', 'SAND', 'MANA', 'ENJ', 'BAT', 'KNC', 'BNT', 'SNX', 'UMA', 'GRT', 'LRC', 'ZRX', 'OXT', 'CGLD', 'NMR', 'TRB', 'BAND', 'BAL', 'YFI', 'KSM', 'SUSHI', 'FIL', 'RUNE', 'ICP', 'MINA', 'GNO', 'CHZ', 'KEEP', 'NU', 'MASK', 'FORTH', 'ARPA', 'RAD', 'LPT', 'GTC', 'MLN', 'QNT', 'PERP', 'MCO2', 'FARM', 'RARI', 'RNDR', 'RENDER', 'PLA', 'FOX', 'ALCX', 'BOND', 'SPELL', 'ENS', 'API3', 'BICO', 'GODS', 'IMX', 'STX', 'GLM', 'REQ', 'TRU', 'FXS', 'VITE', 'DENT', 'WAXP', 'CKB', 'AR', 'XEC', 'AUDIO', 'RAY', 'SRM', 'C98', 'SLP', 'AXS', 'ILV', 'ALICE', 'YGG', 'DAR', 'TLM', 'LTO', 'VET', 'THETA', 'TFUEL', 'HBAR', 'ONE', 'CELO', 'CRO', 'NEXO', 'CEL', 'KCS', 'HT', 'OKB', 'FTT', 'GT', 'WOO', 'XEM', 'XYM', 'ZIL', 'RVN', 'DGB', 'SC', 'DCR', 'ZEN', 'ZEC', 'DASH', 'XMR', 'SUI', 'PEPE', 'NEAR', 'APT', 'INJ', 'OP', 'ARB', 'FET', 'TIA', 'SEI', 'ORDI', 'BONK', 'WIF', 'FLOKI'
+    ]);
+
+    if (symbolsToScan && symbolsToScan.length > 0) {
+      symbolsToScan = symbolsToScan.filter(sym => {
+        const base = sym.split('-')[0].replace(/[0-9]+$/, '');
+        return REVOLUT_SUPPORTED.has(base);
+      });
+    }
+
     if (!symbolsToScan || symbolsToScan.length === 0) {
       symbolsToScan = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'DOGE-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD', 'DOT-USD'];
     }
