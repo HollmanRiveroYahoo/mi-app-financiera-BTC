@@ -13,7 +13,7 @@ export async function POST(request) {
     const pool = getDb();
     
     // Opprett tabell hvis den ikke finnes (f?rste gangs oppstart)
-    await pool.execute(\
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -21,7 +21,7 @@ export async function POST(request) {
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    \);
+    `);
 
     const [rows] = await pool.execute('SELECT * FROM users WHERE username = ?', [username]);
     
