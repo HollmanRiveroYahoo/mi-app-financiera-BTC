@@ -1,5 +1,5 @@
 require('dotenv').config({ path: '.env.local' });
-const mysql = require('mysql2/promise');
+const { sql } = require('@vercel/postgres');
 const bcrypt = require('bcryptjs');
 
 async function lagBruker() {
@@ -12,35 +12,41 @@ async function lagBruker() {
   }
 
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
-    });
-
-    console.log('Koblet til Domeneshop databasen...');
+    console.log('Kobler til Vercel Postgres databasen...');
 
     // Krypter passordet
     const hash = await bcrypt.hash(password, 10);
 
+    // Opprett tabell hvis den ikke finnes
+    await sql
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        subscription_status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    ;
+
+    // Sjekk om brukeren finnes
+    const existingUser = await sqlSELECT * FROM users WHERE username = ;
+    if (existingUser.rowCount > 0) {
+      console.error('\n? FEIL: Brukernavnet finnes allerede i databasen.');
+      process.exit(1);
+    }
+
     // Sett inn i databasen
-    await connection.execute(
-      'INSERT INTO users (username, password_hash, subscription_status) VALUES (?, ?, ?)',
-      [username, hash, 'active']
-    );
+    await sql
+      INSERT INTO users (username, password_hash, subscription_status) 
+      VALUES (, , 'active')
+    ;
 
     console.log('\n? SUKSESS! Brukeren "' + username + '" er opprettet med aktivt abonnement.');
     console.log('De kan n? logge inn i appen.');
 
-    await connection.end();
   } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-      console.error('\n? FEIL: Brukernavnet finnes allerede i databasen.');
-    } else {
-      console.error('\n? FEIL VED TILKOBLING ELLER LAGRING:');
-      console.error(error.message);
-    }
+    console.error('\n? FEIL VED TILKOBLING ELLER LAGRING:');
+    console.error(error.message);
   }
 }
 

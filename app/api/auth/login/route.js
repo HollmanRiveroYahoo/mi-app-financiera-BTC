@@ -1,71 +1,90 @@
-import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+﻿import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { sql } from '@vercel/postgres';
 
 export async function POST(request) {
   try {
     const { username, password } = await request.json();
+
     if (!username || !password) {
-      return NextResponse.json({ error: 'Brukernavn og passord er p?krevd' }, { status: 400 });
+      return NextResponse.json({ error: 'Brukernavn og passord er påkrevd' }, { status: 400 });
     }
 
-    const pool = getDb();
-    
-    // Opprett tabell hvis den ikke finnes (f?rste gangs oppstart)
-    await pool.execute(`
+    // Opprett tabell hvis den ikke finnes (første gangs oppstart)
+    await sql\
       CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `);
+    \;
 
-    const [rows] = await pool.execute('SELECT * FROM users WHERE username = ?', [username]);
+    const result = await sql\SELECT * FROM users WHERE username = \\;
+    const rows = result.rows;
     
+    // Auto-opprett admin for testing hvis databasen er HELT tom
     if (rows.length === 0) {
-      // HACK FOR ? LAGE TESTBRUKER HVIS DATABASEN ER TOM
-      const [allUsers] = await pool.execute('SELECT COUNT(*) as count FROM users');
-      if (allUsers[0].count === 0 && username === 'admin') {
+      const allUsers = await sql\SELECT COUNT(*) as count FROM users\;
+      if (parseInt(allUsers.rows[0].count) === 0) {
         const hash = await bcrypt.hash(password, 10);
-        await pool.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', [username, hash]);
-        return NextResponse.json({ message: 'Testbruker opprettet! Pr?v ? logge inn igjen.' }, { status: 201 });
+        await sql\INSERT INTO users (username, password_hash) VALUES (\, \)\;
+        
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_secret_key_123');
+        const token = await new SignJWT({ username })
+          .setProtectedHeader({ alg: 'HS256' })
+          .setExpirationTime('24h')
+          .sign(secret);
+          
+        const response = NextResponse.json({ success: true, message: 'Første bruker opprettet' });
+        response.cookies.set('auth_token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 60 * 60 * 24
+        });
+        return response;
       }
-      return NextResponse.json({ error: 'Feil brukernavn eller passord' }, { status: 401 });
+    }
+
+    if (rows.length === 0) {
+      return NextResponse.json({ error: 'Ugyldig brukernavn eller passord' }, { status: 401 });
     }
 
     const user = rows[0];
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
-    if (!passwordMatch) {
-      return NextResponse.json({ error: 'Feil brukernavn eller passord' }, { status: 401 });
-    }
-
+    // Sjekk om de har aktivt abonnement
     if (user.subscription_status !== 'active') {
       return NextResponse.json({ error: 'Abonnementet ditt er ikke aktivt' }, { status: 403 });
     }
 
+    const isValid = await bcrypt.compare(password, user.password_hash);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Ugyldig brukernavn eller passord' }, { status: 401 });
+    }
+
     // Generer JWT token
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_secret_key_123');
-    const token = await new SignJWT({ userId: user.id, username: user.username })
+    const token = await new SignJWT({ username: user.username })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('24h')
       .sign(secret);
 
-    // Sett cookie
-    const response = NextResponse.json({ success: true, message: 'Logget inn!' });
+    const response = NextResponse.json({ success: true });
+    
     response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 // 24 timer
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24
     });
 
     return response;
+
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json({ error: 'En feil oppstod ved innlogging. Sjekk databasetilkobling.' }, { status: 500 });
+    return NextResponse.json({ error: 'Noe gikk galt med innloggingen' }, { status: 500 });
   }
 }

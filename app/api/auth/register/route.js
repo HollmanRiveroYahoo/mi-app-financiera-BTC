@@ -1,35 +1,43 @@
-import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+﻿import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { sql } from '@vercel/postgres';
 
 export async function POST(request) {
   try {
-    const { username, password, subscriptionId } = await request.json();
-    
-    if (!username || !password || !subscriptionId) {
-      return NextResponse.json({ error: 'Mangler data for registrering' }, { status: 400 });
+    const { username, password } = await request.json();
+
+    if (!username || !password || password.length < 6) {
+      return NextResponse.json({ error: 'Ugyldig brukernavn eller for kort passord' }, { status: 400 });
     }
 
-    const pool = getDb();
+    // Opprett tabell hvis den ikke finnes
+    await sql\
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        subscription_status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    \;
 
-    // Sjekk om brukeren allerede finnes
-    const [existing] = await pool.execute('SELECT id FROM users WHERE username = ?', [username]);
-    if (existing.length > 0) {
-      return NextResponse.json({ error: 'Brukernavnet er allerede tatt' }, { status: 400 });
+    // Sjekk om brukeren eksisterer
+    const existing = await sql\SELECT * FROM users WHERE username = \\;
+    if (existing.rows.length > 0) {
+      return NextResponse.json({ error: 'Brukernavnet er allerede i bruk' }, { status: 409 });
     }
 
-    // Hash passordet
     const hash = await bcrypt.hash(password, 10);
+    
+    // Sett inn bruker
+    await sql\
+      INSERT INTO users (username, password_hash, subscription_status) 
+      VALUES (\, \, 'active')
+    \;
 
-    // Sett inn ny bruker. Vi lagrer subscriptionId i subscription_status feltet for n?.
-    await pool.execute(
-      'INSERT INTO users (username, password_hash, subscription_status) VALUES (?, ?, ?)', 
-      [username, hash, 'active'] // I en full prod-versjon b?r vi ha et eget paypal_subscription_id felt
-    );
-
-    return NextResponse.json({ success: true, message: 'Konto opprettet! Du kan n? logge inn.' });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Registration error:', error);
-    return NextResponse.json({ error: 'En feil oppstod ved registrering i databasen.' }, { status: 500 });
+    return NextResponse.json({ error: 'Kunne ikke opprette bruker' }, { status: 500 });
   }
 }
