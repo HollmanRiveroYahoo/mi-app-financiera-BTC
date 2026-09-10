@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
-import { sql } from '@vercel/postgres';
+import { Client } from 'pg';
 
 export async function POST(request) {
+  const client = new Client({ connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL });
+  
   try {
+    await client.connect();
     const { username, password } = await request.json();
 
     if (!username || !password) {
       return NextResponse.json({ error: 'Brukernavn og passord er påkrevd' }, { status: 400 });
     }
 
-    await sql`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -19,16 +22,16 @@ export async function POST(request) {
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    const result = await sql`SELECT * FROM users WHERE username = ${username}`;
+    const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
     const rows = result.rows;
     
     if (rows.length === 0) {
-      const allUsers = await sql`SELECT COUNT(*) as count FROM users`;
+      const allUsers = await client.query('SELECT COUNT(*) as count FROM users');
       if (parseInt(allUsers.rows[0].count) === 0) {
         const hash = await bcrypt.hash(password, 10);
-        await sql`INSERT INTO users (username, password_hash) VALUES (${username}, ${hash})`;
+        await client.query('INSERT INTO users (username, password_hash) VALUES ($1, $2)', [username, hash]);
         
         const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_secret_key_123');
         const token = await new SignJWT({ username })
@@ -82,5 +85,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Noe gikk galt med innloggingen' }, { status: 500 });
+  } finally {
+    await client.end();
   }
 }

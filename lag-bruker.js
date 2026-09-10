@@ -1,5 +1,5 @@
 require('dotenv').config({ path: '.env.local' });
-const { sql } = require('@vercel/postgres');
+const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
 
 async function lagBruker() {
@@ -11,12 +11,17 @@ async function lagBruker() {
     process.exit(1);
   }
 
+  const client = new Client({
+    connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL
+  });
+
   try {
-    console.log('Kobler til Vercel Postgres databasen...');
+    console.log('Kobler til Vercel/Prisma Postgres databasen...');
+    await client.connect();
 
     const hash = await bcrypt.hash(password, 10);
 
-    await sql`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -24,18 +29,18 @@ async function lagBruker() {
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    const existingUser = await sql`SELECT * FROM users WHERE username = ${username}`;
+    const existingUser = await client.query('SELECT * FROM users WHERE username = $1', [username]);
     if (existingUser.rowCount > 0) {
       console.error('\n❌ FEIL: Brukernavnet finnes allerede i databasen.');
       process.exit(1);
     }
 
-    await sql`
-      INSERT INTO users (username, password_hash, subscription_status) 
-      VALUES (${username}, ${hash}, 'active')
-    `;
+    await client.query(
+      `INSERT INTO users (username, password_hash, subscription_status) VALUES ($1, $2, 'active')`,
+      [username, hash]
+    );
 
     console.log('\n✅ SUKSESS! Brukeren "' + username + '" er opprettet med aktivt abonnement.');
     console.log('De kan nå logge inn i appen.');
@@ -43,6 +48,8 @@ async function lagBruker() {
   } catch (error) {
     console.error('\n❌ FEIL VED TILKOBLING ELLER LAGRING:');
     console.error(error.message);
+  } finally {
+    await client.end();
   }
 }
 
