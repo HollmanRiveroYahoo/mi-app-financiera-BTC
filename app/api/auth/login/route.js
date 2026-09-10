@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { sql } from '@vercel/postgres';
@@ -11,8 +11,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Brukernavn og passord er påkrevd' }, { status: 400 });
     }
 
-    // Opprett tabell hvis den ikke finnes (første gangs oppstart)
-    await sql\
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -20,17 +19,16 @@ export async function POST(request) {
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    \;
+    `;
 
-    const result = await sql\SELECT * FROM users WHERE username = \\;
+    const result = await sql`SELECT * FROM users WHERE username = ${username}`;
     const rows = result.rows;
     
-    // Auto-opprett admin for testing hvis databasen er HELT tom
     if (rows.length === 0) {
-      const allUsers = await sql\SELECT COUNT(*) as count FROM users\;
+      const allUsers = await sql`SELECT COUNT(*) as count FROM users`;
       if (parseInt(allUsers.rows[0].count) === 0) {
         const hash = await bcrypt.hash(password, 10);
-        await sql\INSERT INTO users (username, password_hash) VALUES (\, \)\;
+        await sql`INSERT INTO users (username, password_hash) VALUES (${username}, ${hash})`;
         
         const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_secret_key_123');
         const token = await new SignJWT({ username })
@@ -55,7 +53,6 @@ export async function POST(request) {
 
     const user = rows[0];
 
-    // Sjekk om de har aktivt abonnement
     if (user.subscription_status !== 'active') {
       return NextResponse.json({ error: 'Abonnementet ditt er ikke aktivt' }, { status: 403 });
     }
@@ -65,7 +62,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ugyldig brukernavn eller passord' }, { status: 401 });
     }
 
-    // Generer JWT token
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_secret_key_123');
     const token = await new SignJWT({ username: user.username })
       .setProtectedHeader({ alg: 'HS256' })

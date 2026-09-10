@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { sql } from '@vercel/postgres';
 
@@ -10,8 +10,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ugyldig brukernavn eller for kort passord' }, { status: 400 });
     }
 
-    // Opprett tabell hvis den ikke finnes
-    await sql\
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -19,21 +18,19 @@ export async function POST(request) {
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    \;
+    `;
 
-    // Sjekk om brukeren eksisterer
-    const existing = await sql\SELECT * FROM users WHERE username = \\;
+    const existing = await sql`SELECT * FROM users WHERE username = ${username}`;
     if (existing.rows.length > 0) {
       return NextResponse.json({ error: 'Brukernavnet er allerede i bruk' }, { status: 409 });
     }
 
     const hash = await bcrypt.hash(password, 10);
     
-    // Sett inn bruker
-    await sql\
+    await sql`
       INSERT INTO users (username, password_hash, subscription_status) 
-      VALUES (\, \, 'active')
-    \;
+      VALUES (${username}, ${hash}, 'active')
+    `;
 
     return NextResponse.json({ success: true });
   } catch (error) {

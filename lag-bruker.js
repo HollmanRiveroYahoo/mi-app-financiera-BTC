@@ -14,11 +14,9 @@ async function lagBruker() {
   try {
     console.log('Kobler til Vercel Postgres databasen...');
 
-    // Krypter passordet
     const hash = await bcrypt.hash(password, 10);
 
-    // Opprett tabell hvis den ikke finnes
-    await sql
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -26,26 +24,24 @@ async function lagBruker() {
         subscription_status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    ;
+    `;
 
-    // Sjekk om brukeren finnes
-    const existingUser = await sqlSELECT * FROM users WHERE username = ;
+    const existingUser = await sql`SELECT * FROM users WHERE username = ${username}`;
     if (existingUser.rowCount > 0) {
-      console.error('\n? FEIL: Brukernavnet finnes allerede i databasen.');
+      console.error('\n❌ FEIL: Brukernavnet finnes allerede i databasen.');
       process.exit(1);
     }
 
-    // Sett inn i databasen
-    await sql
+    await sql`
       INSERT INTO users (username, password_hash, subscription_status) 
-      VALUES (, , 'active')
-    ;
+      VALUES (${username}, ${hash}, 'active')
+    `;
 
-    console.log('\n? SUKSESS! Brukeren "' + username + '" er opprettet med aktivt abonnement.');
-    console.log('De kan n? logge inn i appen.');
+    console.log('\n✅ SUKSESS! Brukeren "' + username + '" er opprettet med aktivt abonnement.');
+    console.log('De kan nå logge inn i appen.');
 
   } catch (error) {
-    console.error('\n? FEIL VED TILKOBLING ELLER LAGRING:');
+    console.error('\n❌ FEIL VED TILKOBLING ELLER LAGRING:');
     console.error(error.message);
   }
 }
